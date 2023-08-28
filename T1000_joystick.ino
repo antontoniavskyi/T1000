@@ -1,10 +1,19 @@
+//cd Nextcloud/PC_files/Development/Arduino/T1000/T1000_joystick
+
 #include <ezButton.h>
+
+#define JS1_VRX_PIN 36
+#define JS1_VRY_PIN 37
+#define JS1_SW_PIN 12
+
+#define JS2_VRX_PIN 38
+#define JS2_VRX_PIN 39
+#define JS2_SW_PIN 13
 
 struct joystickStruct {
   int VRX_PIN;
   int VRY_PIN;
-  int SW_PIN;
-
+  
   int valueX; // to store the X-axis value
   int valueY; // to store the Y-axis value
   int bValue; // To store value of the button
@@ -17,17 +26,8 @@ struct joystickStruct {
 
 struct joystickStruct joystick[2];
 
-joystick[0].VRX_PIN = 36;
-joystick[0].VRY_PIN = 37;
-joystick[0].SW_PIN = 12;
-
-joystick[1].VRX_PIN = 38;
-joystick[1].VRY_PIN = 39;
-joystick[1].SW_PIN = 13;
-
-ezButton button1(joystick[0].SW_PIN);
-ezButton button2(joystick[1].SW_PIN);
-
+ezButton button_0(JS1_SW_PIN);
+ezButton button_1(JS2_SW_PIN);
 
 uint32_t timer;
 
@@ -35,44 +35,45 @@ void setup() {
   Serial.begin(115200);
   initStructure();
 
-  pinMode(joystick[0].VRX_PIN, INPUT);
-  pinMode(joystick[0].VRY_PIN, INPUT);
-  pinMode(joystick[0].SW_PIN, INPUT_PULLUP);
+  pinMode(JS1_VRX_PIN, INPUT);
+  pinMode(JS1_VRY_PIN, INPUT);
+  pinMode(JS1_SW_PIN, INPUT_PULLUP);
 
-  pinMode(joystick[1].VRX_PIN, INPUT);
-  pinMode(joystick[1].VRY_PIN, INPUT);
-  pinMode(joystick[1].SW_PIN, INPUT_PULLUP);
+  pinMode(JS2_VRX_PIN, INPUT);
+  pinMode(JS2_VRX_PIN, INPUT);
+  pinMode(JS2_SW_PIN, INPUT_PULLUP);
 
-  button1.setDebounceTime(50); // set debounce time to 50 milliseconds
-  button2.setDebounceTime(50); // set debounce time to 50 milliseconds
+  button_0.setDebounceTime(50); // set debounce time to 50 milliseconds
+  button_1.setDebounceTime(50); // set debounce time to 50 milliseconds
 }
 
 void loop() {
-  button1.loop(); // MUST call the loop() function first
-  button2.loop();
+  button_0.loop(); // MUST call the loop() function first
+  button_1.loop();
 
   getJoystickAndButtonState();
 
-  if (button.isPressed()) {
+  if (button_0.isPressed()) {
     Serial.println("The button is pressed");
     // TODO do something here
   }
 
-  if (button.isReleased()) {
+  if (button_0.isReleased()) {
     Serial.println("The button is released");
     // TODO do something here
   }
 
   // print data to Serial Monitor on Arduino IDE
 
-  if (millis() - timer > 300) {
+  if (millis() - timer > 500) {
+    Serial.println("**********************************************");
     timer = millis();
     for (byte i = 0; i < 2; i++) {
       if (joystick[i].valueX > 1900) {
         Serial.printf("JOYSTICK %i: x = ", i);
         Serial.print(joystick[i].valueXhigh);
       } else {
-        Serial.print("JOYSTICK %i: x = ", i);
+        Serial.printf("JOYSTICK %i: x = ", i);
         Serial.print(joystick[i].valueXlow);
       }
       if (joystick[i].valueY > 1900) {
@@ -85,11 +86,18 @@ void loop() {
       Serial.print(" : button = ");
       Serial.println(joystick[i].bValue);
     }
+    Serial.println(" ");
   }
+
+
 }
 
 void initStructure() {
+  joystick[0].VRX_PIN = 36;
+  joystick[0].VRY_PIN = 37;
 
+  joystick[1].VRX_PIN = 38;
+  joystick[1].VRY_PIN = 39;
 
   for (byte i = 0; i < 2; i++) {
     joystick[i].valueX = 0; // to store the X-axis value
@@ -108,12 +116,21 @@ void getJoystickAndButtonState() {
     joystick[i].valueX = analogRead(joystick[i].VRX_PIN);
     joystick[i].valueY = analogRead(joystick[i].VRY_PIN);
 
+    /*Serial.println("DEBUG");
+      Serial.println(joystick[i].valueX);
+      Serial.println(joystick[i].valueY);*/
+
     joystick[i].valueXhigh = map(joystick[i].valueX, 1900, 4095, 1, 9);
     joystick[i].valueXlow = map(joystick[i].valueX, 0, 1900, -9, 0);
     joystick[i].valueYhigh = map(joystick[i].valueY, 1900, 4095, 1, 9);
     joystick[i].valueYlow = map(joystick[i].valueY, 0, 1900, -9, 0);
 
     // Read the button value
-    joystick[i].bValue = button.getState();
+    if(i == 0){
+      joystick[i].bValue = button_0.getState();
+    } else {
+      joystick[i].bValue = button_1.getState();
+    }
+    
   }
 }
