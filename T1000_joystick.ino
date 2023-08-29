@@ -1,6 +1,7 @@
 //cd Nextcloud/PC_files/Development/Arduino/T1000/T1000_joystick
 
 #include <ezButton.h>
+#include "joystickBLE.h"
 
 #define JS1_VRX_PIN 36
 #define JS1_VRY_PIN 37
@@ -13,7 +14,7 @@
 struct joystickStruct {
   int VRX_PIN;
   int VRY_PIN;
-  
+
   int valueX; // to store the X-axis value
   int valueY; // to store the Y-axis value
   int bValue; // To store value of the button
@@ -31,6 +32,8 @@ ezButton button_1(JS2_SW_PIN);
 
 uint32_t timer;
 
+
+
 void setup() {
   Serial.begin(115200);
   initStructure();
@@ -45,13 +48,18 @@ void setup() {
 
   button_0.setDebounceTime(50); // set debounce time to 50 milliseconds
   button_1.setDebounceTime(50); // set debounce time to 50 milliseconds
+
+  joystickBLEinit();
+
+  
+  Serial.println("Waiting a client connection to notify...");
 }
 
 void loop() {
   button_0.loop(); // MUST call the loop() function first
   button_1.loop();
 
-  getJoystickAndButtonState();
+
 
   if (button_0.isPressed()) {
     Serial.println("The button is pressed");
@@ -64,29 +72,40 @@ void loop() {
   }
 
   // print data to Serial Monitor on Arduino IDE
-
-  if (millis() - timer > 500) {
-    Serial.println("**********************************************");
-    timer = millis();
-    for (byte i = 0; i < 2; i++) {
-      if (joystick[i].valueX > 1900) {
-        Serial.printf("JOYSTICK %i: x = ", i);
-        Serial.print(joystick[i].valueXhigh);
-      } else {
-        Serial.printf("JOYSTICK %i: x = ", i);
-        Serial.print(joystick[i].valueXlow);
+  if (deviceConnected) {
+    getJoystickAndButtonState();
+    if (millis() - timer > 500) {
+      Serial.println("**********************************************");
+      timer = millis();
+      for (byte i = 0; i < 1; i++) {
+        if (joystick[i].valueX > 1900) {
+          Serial.printf("JOYSTICK %i: x = ", i);
+          Serial.print(joystick[i].valueXhigh);
+          joystickXCharacteristic.setValue(joystick[i].valueXhigh);
+        } else {
+          Serial.printf("JOYSTICK %i: x = ", i);
+          Serial.print(joystick[i].valueXlow);
+          joystickXCharacteristic.setValue(joystick[i].valueXlow);
+        }
+        if (joystick[i].valueY > 1900) {
+          Serial.print(", y = ");
+          Serial.print(joystick[i].valueYhigh);
+          joystickYCharacteristic.setValue(joystick[i].valueYhigh);
+        } else {
+          Serial.print(", y = ");
+          Serial.print(joystick[i].valueYlow);
+          joystickYCharacteristic.setValue(joystick[i].valueYlow);
+        }
+        Serial.print(" : button = ");
+        Serial.println(joystick[i].bValue);
+        joystickBTCharacteristic.setValue(joystick[i].bValue);
+        
       }
-      if (joystick[i].valueY > 1900) {
-        Serial.print(", y = ");
-        Serial.print(joystick[i].valueYhigh);
-      } else {
-        Serial.print(", y = ");
-        Serial.print(joystick[i].valueYlow);
-      }
-      Serial.print(" : button = ");
-      Serial.println(joystick[i].bValue);
+      joystickXCharacteristic.notify();
+      joystickYCharacteristic.notify();
+      joystickBTCharacteristic.notify();
+      Serial.println(" ");
     }
-    Serial.println(" ");
   }
 
 
@@ -126,11 +145,11 @@ void getJoystickAndButtonState() {
     joystick[i].valueYlow = map(joystick[i].valueY, 0, 1900, -9, 0);
 
     // Read the button value
-    if(i == 0){
+    if (i == 0) {
       joystick[i].bValue = button_0.getState();
     } else {
       joystick[i].bValue = button_1.getState();
     }
-    
+
   }
 }
