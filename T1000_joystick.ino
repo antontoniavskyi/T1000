@@ -51,7 +51,7 @@ void setup() {
 
   joystickBLEinit();
 
-  
+
   Serial.println("Waiting a client connection to notify...");
 }
 
@@ -77,33 +77,62 @@ void loop() {
     if (millis() - timer > 500) {
       Serial.println("**********************************************");
       timer = millis();
-      for (byte i = 0; i < 1; i++) {
-        if (joystick[i].valueX > 1900) {
-          Serial.printf("JOYSTICK %i: x = ", i);
-          Serial.print(joystick[i].valueXhigh);
-          joystickXCharacteristic.setValue(joystick[i].valueXhigh);
+      for (byte i = 0; i < 2; i++) {
+        if (i == 0) {
+          if (joystick[i].valueX > 1900) {
+            Serial.printf("JOYSTICK %i: x = ", i);
+            Serial.print(joystick[i].valueXhigh);
+            joystickXCharacteristic_1.setValue(joystick[i].valueXhigh);
+          } else {
+            Serial.printf("JOYSTICK %i: x = ", i);
+            Serial.print(joystick[i].valueXlow);
+            joystickXCharacteristic_1.setValue(joystick[i].valueXlow);
+          }
+          if (joystick[i].valueY > 1900) {
+            Serial.print(", y = ");
+            Serial.print(joystick[i].valueYhigh);
+            joystickYCharacteristic_1.setValue(joystick[i].valueYhigh);
+          } else {
+            Serial.print(", y = ");
+            Serial.print(joystick[i].valueYlow);
+            joystickYCharacteristic_1.setValue(joystick[i].valueYlow);
+          }
+          Serial.print(" : button = ");
+          Serial.println(joystick[i].bValue);
+          joystickBTCharacteristic_1.setValue(joystick[i].bValue);
         } else {
-          Serial.printf("JOYSTICK %i: x = ", i);
-          Serial.print(joystick[i].valueXlow);
-          joystickXCharacteristic.setValue(joystick[i].valueXlow);
+          if (joystick[i].valueX > 1900) {
+            Serial.printf("JOYSTICK %i: x = ", i);
+            Serial.print(joystick[i].valueXhigh);
+            joystickXCharacteristic_2.setValue(joystick[i].valueXhigh);
+          } else {
+            Serial.printf("JOYSTICK %i: x = ", i);
+            Serial.print(joystick[i].valueXlow);
+            joystickXCharacteristic_2.setValue(joystick[i].valueXlow);
+          }
+          if (joystick[i].valueY > 1900) {
+            Serial.print(", y = ");
+            Serial.print(joystick[i].valueYhigh);
+            joystickYCharacteristic_2.setValue(joystick[i].valueYhigh);
+          } else {
+            Serial.print(", y = ");
+            Serial.print(joystick[i].valueYlow);
+            joystickYCharacteristic_2.setValue(joystick[i].valueYlow);
+          }
+          Serial.print(" : button = ");
+          Serial.println(joystick[i].bValue);
+          joystickBTCharacteristic_2.setValue(joystick[i].bValue);
         }
-        if (joystick[i].valueY > 1900) {
-          Serial.print(", y = ");
-          Serial.print(joystick[i].valueYhigh);
-          joystickYCharacteristic.setValue(joystick[i].valueYhigh);
-        } else {
-          Serial.print(", y = ");
-          Serial.print(joystick[i].valueYlow);
-          joystickYCharacteristic.setValue(joystick[i].valueYlow);
-        }
-        Serial.print(" : button = ");
-        Serial.println(joystick[i].bValue);
-        joystickBTCharacteristic.setValue(joystick[i].bValue);
-        
+
+
       }
-      joystickXCharacteristic.notify();
-      joystickYCharacteristic.notify();
-      joystickBTCharacteristic.notify();
+      joystickXCharacteristic_1.notify();
+      joystickYCharacteristic_1.notify();
+      joystickBTCharacteristic_1.notify();
+
+      joystickXCharacteristic_2.notify();
+      joystickYCharacteristic_2.notify();
+      joystickBTCharacteristic_2.notify();
       Serial.println(" ");
     }
   }
